@@ -253,41 +253,41 @@ def show_image(image_path):
 	pygame.display.flip()
 
 def CapturePicture():
-        global imagecounter
-        global imagefolder
-        global Numeral
-        global Message
-        global screen
-        global background
-        global screenPicture
-        global backgroundPicture
-        global pygame
-        global ImageShowed
-        global CountDownPhoto
-	global BackgroundColor	
-	
-	BackgroundColor = ""
-	Numeral = ""
-        Message = ""
-	UpdateDisplay()
-	time.sleep(1)
-	CountDownPhoto = ""
-	UpdateDisplay()
-	background.fill(pygame.Color("black"))
-	screen.blit(background, (0, 0))
-	pygame.display.flip()
-	camera.start_preview()
-	BackgroundColor = "black"
+    global imagecounter
+    global imagefolder
+    global Numeral
+    global Message
+    global screen
+    global background
+    global screenPicture
+    global backgroundPicture
+    global pygame
+    global ImageShowed
+    global CountDownPhoto
+    global BackgroundColor
 
-	for x in range(3, -1, -1):
-                if x == 0:                        
-                        Numeral = ""
-                        Message = "PRENEZ LA POSE"
-                else:                        
-                        Numeral = str(x)
-                        Message = ""                
-                UpdateDisplay()
-                time.sleep(1)
+    BackgroundColor = ""
+    Numeral = ""
+    Message = ""
+    UpdateDisplay()
+    time.sleep(1)
+    CountDownPhoto = ""
+    UpdateDisplay()
+    background.fill(pygame.Color("black"))
+    screen.blit(background, (0, 0))
+    pygame.display.flip()
+    camera.start_preview()
+    BackgroundColor = "black"
+
+    for x in range(3, -1, -1):
+        if x == 0:                        
+             Numeral = ""
+             Message = "PRENEZ LA POSE"
+        else:                        
+             Numeral = str(x)
+             Message = ""                
+        UpdateDisplay()
+        time.sleep(1)
 
         BackgroundColor = ""
         Numeral = ""
@@ -302,7 +302,6 @@ def CapturePicture():
         ImageShowed = False
         return filename
     
-	
 def TakePictures():
         global imagecounter
         global imagefolder
@@ -313,10 +312,10 @@ def TakePictures():
         global pygame
         global ImageShowed
         global CountDownPhoto
-	global BackgroundColor
-	global Printing
-	global PhotosPerCart
-	global TotalImageCount
+        global BackgroundColor
+        global Printing
+        global PhotosPerCart
+        global TotalImageCount
 
         input(pygame.event.get())
         CountDownPhoto = "1/3"        
@@ -336,7 +335,7 @@ def TakePictures():
         image2 = PIL.Image.open(filename2)
         image3 = PIL.Image.open(filename3)   
         TotalImageCount = TotalImageCount + 1
-	
+
         bgimage.paste(image1, (625, 30))
         bgimage.paste(image2, (625, 410))
         bgimage.paste(image3, (55, 410))
@@ -359,8 +358,8 @@ def TakePictures():
         Printing = False
         WaitForPrintingEvent()
         Numeral = ""
-	Message = ""
-	print(Printing)
+        Message = ""
+        print(Printing)
         if Printing:
                 if (TotalImageCount <= PhotosPerCart):
                         if os.path.isfile('/home/pi/Desktop/tempprint.jpg'):
@@ -400,7 +399,7 @@ def MyCallback(channel):
     global Printing
     GPIO.remove_event_detect(BUTTON_PIN)
     Printing=True
-	
+
 def WaitForPrintingEvent():
     global BackgroundColor
     global Numeral
@@ -414,8 +413,8 @@ def WaitForPrintingEvent():
     while Printing == False and countDown > 0:
         if(Printing == True):
             return
-        for event in pygame.event.get():			
-            if event.type == pygame.KEYDOWN:				
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_DOWN:
                     GPIO.remove_event_detect(BUTTON_PIN)
                     Printing = True
@@ -429,16 +428,16 @@ def WaitForPrintingEvent():
 
     GPIO.remove_event_detect(BUTTON_PIN)
         
-	
+
 def WaitForEvent():
     global pygame
     NotEvent = True
     while NotEvent:
             input_state = GPIO.input(BUTTON_PIN)
             if input_state == False:
-                    NotEvent = False			
+                    NotEvent = False
                     return
-            for event in pygame.event.get():			
+            for event in pygame.event.get():
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             pygame.quit()
