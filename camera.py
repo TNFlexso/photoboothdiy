@@ -295,7 +295,7 @@ def CapturePicture():
         UpdateDisplay()
         imagecounter = imagecounter + 1
         ts = time.time()
-        filename = os.path.join(imagefolder, 'images', str(imagecounter)+"_"+str(ts) + '.jpg')
+        filename = os.path.join(imagefolder, 'images', str(imagecounter)+"_"+str(ts) + '.png')
         camera.capture(filename, resize=(IMAGE_WIDTH, IMAGE_HEIGHT))
         camera.stop_preview()
         ShowPicture(filename, 2)
@@ -341,14 +341,14 @@ def TakePictures():
         bgimage.paste(image3, (55, 410))
         # Create the final filename
         ts = time.time()
-        Final_Image_Name = os.path.join(imagefolder, "Final_" + str(TotalImageCount)+"_"+str(ts) + ".jpg")
+        Final_Image_Name = os.path.join(imagefolder, "Final_" + str(TotalImageCount)+"_"+str(ts) + ".png")
         # Save it to the usb drive
         bgimage.save(Final_Image_Name)
         # Save a temp file, its faster to print from the pi than usb
-        bgimage.save('/home/pi/Desktop/tempprint.jpg')
-        ShowPicture('/home/pi/Desktop/tempprint.jpg',3)
+        bgimage.save('/home/pi/Desktop/tempprint.png')
+        ShowPicture('/home/pi/Desktop/tempprint.png',3)
         bgimage2 = bgimage.rotate(90)
-        bgimage2.save('/home/pi/Desktop/tempprint.jpg')
+        bgimage2.save('/home/pi/Desktop/tempprint.png')
         ImageShowed = False
         Message = "Appuyez sur le bouton pour imprimer"
         UpdateDisplay()
@@ -362,7 +362,7 @@ def TakePictures():
         print(Printing)
         if Printing:
                 if (TotalImageCount <= PhotosPerCart):
-                        if os.path.isfile('/home/pi/Desktop/tempprint.jpg'):
+                        if os.path.isfile('/home/pi/Desktop/tempprint.png'):
                                 # Open a connection to cups
                                 conn = cups.Connection()
                                 # get a list of printers
@@ -375,13 +375,13 @@ def TakePictures():
                                 # print the buffer file
                                 printqueuelength = len(conn.getJobs())
                                 if printqueuelength > 1:
-                                        ShowPicture('/home/pi/Desktop/tempprint.jpg',3)
+                                        ShowPicture('/home/pi/Desktop/tempprint.png',3)
                                         conn.enablePrinter(printer_name)
                                         Message = "Impression impossible"                
                                         UpdateDisplay()
                                         time.sleep(1)
                                 else:
-                                        conn.printFile(printer_name, '/home/pi/Desktop/tempprint.jpg', "PhotoBooth", {})
+                                        conn.printFile(printer_name, '/home/pi/Desktop/tempprint.png', "PhotoBooth", {})
                                         time.sleep(40)            
                 else:
                         Message = "Nous vous enverrons vos photos"
