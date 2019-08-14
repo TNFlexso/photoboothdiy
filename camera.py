@@ -11,10 +11,11 @@ from pygame.locals import *
 from time import sleep
 from PIL import Image, ImageDraw
 
-
 # initialise global variables
 Numeral = ""  # Numeral is the number display
 Message = ""  # Message is a fullscreen message
+SubMessage = ""
+LongMessage = ""
 BackgroundColor = ""
 CountDownPhoto = ""
 CountPhotoOnCart = ""
@@ -27,11 +28,9 @@ templatePath = os.path.join('Photos', 'Template', "template.png") #Path of templ
 ImageShowed = False
 Printing = False
 BUTTON_PIN = 25
-#IMAGE_WIDTH = 558
-#IMAGE_HEIGHT = 374
-IMAGE_WIDTH = 550
-IMAGE_HEIGHT = 360
-
+IMAGE_WIDTH = 594
+IMAGE_HEIGHT = 445
+os.environ["SDL_AUDIODRIVER"] = "dsp"
 
 # Load the background template
 bgimage = PIL.Image.open(templatePath)
@@ -42,13 +41,14 @@ GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 # initialise pygame
 pygame.init()  # Initialise pygame
-pygame.mouse.set_visible(False) #hide the mouse cursor
+pygame.font.init()
+# pygame.mouse.set_visible(False) #hide the mouse cursor
 infoObject = pygame.display.Info()
-screen = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.FULLSCREEN)  # Full screen 
+screen = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.RESIZABLE)  # Full screen  , pygame.FULLSCREEN
 background = pygame.Surface(screen.get_size())  # Create the background object
 background = background.convert()  # Convert it to a background
 
-screenPicture = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.FULLSCREEN)  # Full screen
+screenPicture = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.RESIZABLE)  # Full screen
 backgroundPicture = pygame.Surface(screenPicture.get_size())  # Create the background object
 backgroundPicture = background.convert()  # Convert it to a background
 
@@ -121,6 +121,8 @@ def set_demensions(img_w, img_h):
 def InitFolder():
     global imagefolder
     global Message
+    global LongMessage
+    global SubMessage
  
     Message = 'Folder Check...'
     UpdateDisplay()
@@ -133,10 +135,12 @@ def InitFolder():
     imagefolder2 = os.path.join(imagefolder, 'images')
     if not os.path.isdir(imagefolder2):
         os.makedirs(imagefolder2)
- 	
+    
 def DisplayText(fontSize, textToDisplay):
     global Numeral
     global Message
+    global LongMessage
+    global SubMessage
     global screen
     global background
     global pygame
@@ -164,6 +168,8 @@ def UpdateDisplay():
     # init global variables from main thread
     global Numeral
     global Message
+    global SubMessage
+    global LongMessage
     global screen
     global background
     global pygame
@@ -173,17 +179,15 @@ def UpdateDisplay():
     global CountDownPhoto
    
     background.fill(pygame.Color("white"))  # White background
-    #DisplayText(100, Message)
-    #DisplayText(800, Numeral)
-    #DisplayText(500, CountDownPhoto)
+    print(Message, Numeral, CountDownPhoto, LongMessage, SubMessage)
 
     if (BackgroundColor != ""):
         #print(BackgroundColor)
         background.fill(pygame.Color("black"))
+        
     if (Message != ""):
-        #print(displaytext)
-        font = pygame.font.Font(None, 100)
-        text = font.render(Message, 1, (227, 157, 200))
+        font = pygame.font.SysFont("Brandon Grotesque Bold", 100)
+        text = font.render(Message, True, (0, 0, 0))
         textpos = text.get_rect()
         textpos.centerx = background.get_rect().centerx
         textpos.centery = background.get_rect().centery
@@ -191,11 +195,31 @@ def UpdateDisplay():
             backgroundPicture.blit(text, textpos)
         else:
             background.blit(text, textpos)
-
+            
+    if(LongMessage != ""):
+        font = pygame.font.SysFont("Brandon Grotesque Bold", 80)
+        text = font.render(LongMessage, True, (0, 0, 0))
+        textpos = text.get_rect()
+        textpos.centerx = background.get_rect().centerx
+        textpos.centery = background.get_rect().centery - 40
+        if(ImageShowed):
+            backgroundPicture.blit(text, textpos)
+        else:
+            background.blit(text, textpos)
+        font = pygame.font.SysFont("Brandon Grotesque Bold", 100)
+        text = font.render(SubMessage, True, (0, 0, 0))
+        textpos = text.get_rect()
+        textpos.centerx = background.get_rect().centerx
+        textpos.centery = background.get_rect().centery + 40
+        if(ImageShowed):
+            backgroundPicture.blit(text, textpos)
+        else:
+            background.blit(text, textpos)
+        
     if (Numeral != ""):
         #print(displaytext)
-        font = pygame.font.Font(None, 800)
-        text = font.render(Numeral, 1, (227, 157, 200))
+        font = pygame.font.SysFont("Brandon Grotesque Bold", 200)
+        text = font.render(Numeral, True, (255, 255, 255))
         textpos = text.get_rect()
         textpos.centerx = background.get_rect().centerx
         textpos.centery = background.get_rect().centery
@@ -205,9 +229,10 @@ def UpdateDisplay():
             background.blit(text, textpos)
 
     if (CountDownPhoto != ""):
+        print(CountDownPhoto)
         #print(displaytext)
-        font = pygame.font.Font(None, 500)
-        text = font.render(CountDownPhoto, 1, (227, 157, 200))
+        font = pygame.font.SysFont("Brandon Grotesque Bold", 200)
+        text = font.render(CountDownPhoto, True, (0, 0, 0))
         textpos = text.get_rect()
         textpos.centerx = background.get_rect().centerx
         textpos.centery = background.get_rect().centery
@@ -217,9 +242,9 @@ def UpdateDisplay():
             background.blit(text, textpos)
 
     if(ImageShowed == True):
-    	screenPicture.blit(backgroundPicture, (0, 0))   	
+        screenPicture.blit(backgroundPicture, (0, 0))       
     else:
-    	screen.blit(background, (0, 0))
+        screen.blit(background, (0, 0))
    
     pygame.display.flip()
     return
@@ -239,13 +264,28 @@ def ShowPicture(file, delay):
     pygame.display.flip()  # update the display
     ImageShowed = True
     time.sleep(delay)
-	
+    
+def ShowResult(file, delay):
+    global pygame
+    global screenPicture
+    global backgroundPicture
+    global ImageShowed
+    backgroundPicture.fill((255, 255, 255))
+    img = pygame.image.load(file)
+    img = pygame.transform.scale(img, (320,720))  # Make the image fit screen
+    #backgroundPicture.set_alpha(200)
+    backgroundPicture.blit(img, (480,0))
+    screen.blit(backgroundPicture, (0, 0))
+    pygame.display.flip()  # update the display
+    ImageShowed = True
+    time.sleep(delay)
+    
 # display one image on screen
-def show_image(image_path):	
-    screen.fill(pygame.Color("white")) # clear the screen	
+def show_image(image_path): 
+    screen.fill(pygame.Color("white")) # clear the screen   
     img = pygame.image.load(image_path) # load the image
-    img = img.convert()	
-    set_demensions(img.get_width(), img.get_height()) # set pixel dimensions based on image	
+    img = img.convert() 
+    set_demensions(img.get_width(), img.get_height()) # set pixel dimensions based on image 
     x = (infoObject.current_w / 2) - (img.get_width() / 2)
     y = (infoObject.current_h / 2) - (img.get_height() / 2)
     screen.blit(img,(x,y))
@@ -256,6 +296,8 @@ def CapturePicture():
     global imagefolder
     global Numeral
     global Message
+    global LongMessage
+    global SubMessage
     global screen
     global background
     global screenPicture
@@ -277,19 +319,16 @@ def CapturePicture():
     pygame.display.flip()
     camera.start_preview()
     BackgroundColor = "black"
-
-    for x in range(3, -1, -1):
-        if x == 0:                        
-             Numeral = ""
-             Message = "Strike a pose!"
-        else:                        
-             Numeral = str(x)
-             Message = "Hier komt foto" + str(x+1) + "!"                
+    
+    for x in range(3, 0, -1):
+        Numeral = str(x)
+        Message = ""    
         UpdateDisplay()
-        time.sleep(1)
+        time.sleep(0.5)
 
     BackgroundColor = ""
     Numeral = ""
+    LongMessage = ""
     Message = ""
     UpdateDisplay()
     imagecounter = imagecounter + 1
@@ -297,7 +336,8 @@ def CapturePicture():
     filename = os.path.join(imagefolder, 'images', str(imagecounter)+"_"+str(ts) + '.png')
     camera.capture(filename, resize=(IMAGE_WIDTH, IMAGE_HEIGHT))
     camera.stop_preview()
-    ShowPicture(filename, 2)
+    time.sleep(1)
+    ShowPicture(filename, 1)
     ImageShowed = False
     return filename
     
@@ -306,6 +346,8 @@ def TakePictures():
     global imagefolder
     global Numeral
     global Message
+    global LongMessage
+    global SubMessage
     global screen
     global background
     global pygame
@@ -315,15 +357,17 @@ def TakePictures():
     global Printing
     global PhotosPerCart
     global TotalImageCount
+    
+    LongMessage = ""
 
     input(pygame.event.get())
-    CountDownPhoto = "1/3"    
+    CountDownPhoto = "Foto 1/3"    
     filename1 = CapturePicture()
 
-    CountDownPhoto = "2/3"
+    CountDownPhoto = "Foto 2/3"
     filename2 = CapturePicture()
 
-    CountDownPhoto = "3/3"
+    CountDownPhoto = "Foto 3/3"
     filename3 = CapturePicture()
 
     CountDownPhoto = ""
@@ -335,52 +379,55 @@ def TakePictures():
     image3 = PIL.Image.open(filename3)   
     TotalImageCount = TotalImageCount + 1
 
-    bgimage.paste(image1, (625, 30))
-    bgimage.paste(image2, (625, 410))
-    bgimage.paste(image3, (55, 410))
+    bgimage.paste(image1, (57, 194))
+    bgimage.paste(image2, (57, 664))
+    bgimage.paste(image3, (57, 1137))
+    
     # Create the final filename
     ts = time.time()
     Final_Image_Name = os.path.join(imagefolder, "Final_" + str(TotalImageCount)+"_"+str(ts) + ".png")
     # Save it to the usb drive
     bgimage.save(Final_Image_Name)
     # Save a temp file, its faster to print from the pi than usb
-    bgimage.save('/home/pi/Desktop/tempprint.png')
-    ShowPicture('/home/pi/Desktop/tempprint.png',3)
-    bgimage2 = bgimage.rotate(90)
-    bgimage2.save('/home/pi/Desktop/tempprint.png')
+    temppath = os.path.join('Temp', 'tempprint.png')
+    bgimage.save(temppath)
+    ShowResult(temppath,3)
+    #bgimage2 = bgimage.rotate(90)
+    #bgimage2.save(temppath)
     ImageShowed = False
-    Message = "Druk nogmaals op de knop om je foto af te drukken"
+    Message = ""
+    LongMessage = "Druk op de knop om je foto af te drukken"
     UpdateDisplay()
     time.sleep(1)
-    Message = ""
-    UpdateDisplay()
     Printing = False
     WaitForPrintingEvent()
     Numeral = ""
     Message = ""
+    SubMessage = ""
+    LongMessage = ""
     print(Printing)
     if Printing:
         if (TotalImageCount <= PhotosPerCart):
-            if os.path.isfile('/home/pi/Desktop/tempprint.png'):
+            if os.path.isfile(temppath):
                 # Open a connection to cups
                 conn = cups.Connection()
                 # get a list of printers
-                printers = conn.getPrinters()
+                # printers = conn.getPrinters()
                 # select printer 0
-                printer_name = printers.keys()[0]
+                printer_name = "Canon_MP250_series"
                 Message = "Aan het printen..."
                 UpdateDisplay()
                 time.sleep(1)
                 # print the buffer file
                 printqueuelength = len(conn.getJobs())
                 if printqueuelength > 1:
-                    ShowPicture('/home/pi/Desktop/tempprint.png',3)
+                    ShowPicture(temppath,3)
                     conn.enablePrinter(printer_name)
-                    Message = "Impression impossible"                
+                    Message = "Probleem met de printer... :("                
                     UpdateDisplay()
                     time.sleep(1)
                 else:
-                    conn.printFile(printer_name, '/home/pi/Desktop/tempprint.png', "PhotoBooth", {})
+                    conn.printFile(printer_name, temppath, "PhotoBooth", {})
                     time.sleep(40)            
         else:
             Message = "We sturen je foto's op"
@@ -392,7 +439,9 @@ def TakePictures():
     Numeral = ""
     ImageShowed = False
     UpdateDisplay()
-    time.sleep(1)
+    os.remove(filename1)
+    os.remove(filename2)
+    os.remove(filename3)    
 
 def MyCallback(channel):
     global Printing
@@ -403,6 +452,8 @@ def WaitForPrintingEvent():
     global BackgroundColor
     global Numeral
     global Message
+    global LongMessage
+    global SubMessage
     global Printing
     global pygame
     countDown = 5
@@ -419,8 +470,9 @@ def WaitForPrintingEvent():
                     Printing = True
                     return        
         BackgroundColor = ""
-        Numeral = str(countDown)
-        Message = ""
+        Numeral = ""
+        SubMessage = str(countDown)
+        LongMessage = "Druk op de knop om je foto af te drukken"
         UpdateDisplay()        
         countDown = countDown - 1
         time.sleep(1)
@@ -436,13 +488,20 @@ def WaitForEvent():
             if input_state == False:
                     NotEvent = False
                     return
-            for event in pygame.event.get():
+        
+            try:
+                for event in pygame.event.get():
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             pygame.quit()
                         if event.key == pygame.K_DOWN:
                             NotEvent = False
                             return
+                    if event.type == QUIT:
+                        pygame.quit()
+            except:
+                pygame.quit()
+                        
             time.sleep(0.2)
 
 def main(threadName, *args):
@@ -452,8 +511,9 @@ def main(threadName, *args):
             WaitForEvent()
             time.sleep(0.2)
             TakePictures()
+                
     GPIO.cleanup()
-
+    pygame.quit
 
 # launch the main thread
 Thread(target=main, args=('Main', 1)).start()
