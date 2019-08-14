@@ -10,6 +10,7 @@ from threading import Thread
 from pygame.locals import *
 from time import sleep
 from PIL import Image, ImageDraw
+from subprocess import Popen
 
 # initialise global variables
 Numeral = ""  # Numeral is the number display
@@ -179,7 +180,6 @@ def UpdateDisplay():
     global CountDownPhoto
    
     background.fill(pygame.Color("white"))  # White background
-    print(Message, Numeral, CountDownPhoto, LongMessage, SubMessage)
 
     if (BackgroundColor != ""):
         #print(BackgroundColor)
@@ -217,7 +217,6 @@ def UpdateDisplay():
             background.blit(text, textpos)
         
     if (Numeral != ""):
-        #print(displaytext)
         font = pygame.font.SysFont("Brandon Grotesque Bold", 200)
         text = font.render(Numeral, True, (255, 255, 255))
         textpos = text.get_rect()
@@ -229,7 +228,6 @@ def UpdateDisplay():
             background.blit(text, textpos)
 
     if (CountDownPhoto != ""):
-        print(CountDownPhoto)
         #print(displaytext)
         font = pygame.font.SysFont("Brandon Grotesque Bold", 200)
         text = font.render(CountDownPhoto, True, (0, 0, 0))
@@ -388,6 +386,7 @@ def TakePictures():
     Final_Image_Name = os.path.join(imagefolder, "Final_" + str(TotalImageCount)+"_"+str(ts) + ".png")
     # Save it to the usb drive
     bgimage.save(Final_Image_Name)
+    uploadToGP(Final_Image_Name)
     # Save a temp file, its faster to print from the pi than usb
     temppath = os.path.join('Temp', 'tempprint.png')
     bgimage.save(temppath)
@@ -479,7 +478,9 @@ def WaitForPrintingEvent():
 
     GPIO.remove_event_detect(BUTTON_PIN)
         
-
+def uploadToGP(filename):
+    p = Popen(['/usr/bin/share/gpup','-a "trouw"', filename], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    
 def WaitForEvent():
     global pygame
     NotEvent = True
@@ -506,14 +507,17 @@ def WaitForEvent():
 
 def main(threadName, *args):
     InitFolder()
-    while True:
+    
+    try:
+        while True:
             show_image('images/start_camera.jpg')
             WaitForEvent()
             time.sleep(0.2)
             TakePictures()
-                
-    GPIO.cleanup()
-    pygame.quit
+    except:
+        GPIO.cleanup()
+        pygame.quit()
+                    
 
 # launch the main thread
 Thread(target=main, args=('Main', 1)).start()
