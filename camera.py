@@ -5,12 +5,13 @@ import os
 import PIL.Image
 import cups
 import RPi.GPIO as GPIO
+import subprocess
 
 from threading import Thread
 from pygame.locals import *
 from time import sleep
 from PIL import Image, ImageDraw
-from subprocess import Popen
+from subprocess import *
 
 # initialise global variables
 Numeral = ""  # Numeral is the number display
@@ -45,11 +46,11 @@ pygame.init()  # Initialise pygame
 pygame.font.init()
 # pygame.mouse.set_visible(False) #hide the mouse cursor
 infoObject = pygame.display.Info()
-screen = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.RESIZABLE)  # Full screen  , pygame.FULLSCREEN
+screen = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.FULLSCREEN)  # Full screen  , pygame.FULLSCREEN
 background = pygame.Surface(screen.get_size())  # Create the background object
 background = background.convert()  # Convert it to a background
 
-screenPicture = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.RESIZABLE)  # Full screen
+screenPicture = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.FULLSCREEN)  # Full screen
 backgroundPicture = pygame.Surface(screenPicture.get_size())  # Create the background object
 backgroundPicture = background.convert()  # Convert it to a background
 
@@ -58,7 +59,8 @@ transfrom_y = infoObject.current_h # how high to scale the jpg when replaying
 
 camera = picamera.PiCamera()
 # Initialise the camera object
-camera.resolution = (infoObject.current_w, infoObject.current_h)
+#camera.resolution = (infoObject.current_w, infoObject.current_h)
+camera.resolution = (1040, 780)
 camera.rotation              = 0
 camera.hflip                 = True
 camera.vflip                 = False
@@ -255,9 +257,9 @@ def ShowPicture(file, delay):
     global ImageShowed
     backgroundPicture.fill((0, 0, 0))
     img = pygame.image.load(file)
-    img = pygame.transform.scale(img, screenPicture.get_size())  # Make the image full screen
+    img = pygame.transform.scale(img, (1020,780))  # Make the image full screen
     #backgroundPicture.set_alpha(200)
-    backgroundPicture.blit(img, (0,0))
+    backgroundPicture.blit(img, (120,0))
     screen.blit(backgroundPicture, (0, 0))
     pygame.display.flip()  # update the display
     ImageShowed = True
@@ -322,7 +324,7 @@ def CapturePicture():
         Numeral = str(x)
         Message = ""    
         UpdateDisplay()
-        time.sleep(0.5)
+        time.sleep(0.75)
 
     BackgroundColor = ""
     Numeral = ""
@@ -395,9 +397,6 @@ def TakePictures():
     #bgimage2.save(temppath)
     ImageShowed = False
     Message = ""
-    LongMessage = "Druk op de knop om je foto af te drukken"
-    UpdateDisplay()
-    time.sleep(1)
     Printing = False
     WaitForPrintingEvent()
     Numeral = ""
@@ -514,7 +513,8 @@ def main(threadName, *args):
             WaitForEvent()
             time.sleep(0.2)
             TakePictures()
-    except:
+    except Exception as e:
+        print(e)
         GPIO.cleanup()
         pygame.quit()
                     
