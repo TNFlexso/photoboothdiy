@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pygame
 import pygame.camera
 import time
@@ -47,12 +48,13 @@ pygame.font.init()
 pygame.camera.init()
 # pygame.mouse.set_visible(False) #hide the mouse cursor
 infoObject = pygame.display.Info()
-screen = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.FULLSCREEN)  # Full screen  , pygame.FULLSCREEN
-background = pygame.Surface(screen.get_size())  # Create the background object
+screen_size = (infoObject.current_w,infoObject.current_h)
+screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE)  # Full screen  , pygame.FULLSCREEN
+background = pygame.Surface(screen_size)  # Create the background object
 background = background.convert()  # Convert it to a background
 
-screenPicture = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.FULLSCREEN)  # Full screen
-backgroundPicture = pygame.Surface(screenPicture.get_size())  # Create the background object
+screenPicture = pygame.display.set_mode(screen_size, pygame.RESIZABLE)  # Full screen
+backgroundPicture = pygame.Surface(screen_size)  # Create the background object
 backgroundPicture = background.convert()  # Convert it to a background
 
 transform_x = infoObject.current_w # how wide to scale the jpg when replaying
@@ -60,8 +62,9 @@ transfrom_y = infoObject.current_h # how high to scale the jpg when replaying
 
 # Initialise the camera object
 # camera.resolution = (infoObject.current_w, infoObject.current_h)
-camera_resolution = (1040, 780)
-camera = pygame.camera.Camera("/dev/video1",camera_resolution)
+camera_resolution = (infoObject.current_w, infoObject.current_h)
+camera_devices = pygame.camera.list_cameras()
+camera = pygame.camera.Camera(camera_devices[0],camera_resolution)
 #camera.rotation              = 0
 #camera.hflip                 = True
 #camera.vflip                 = False
@@ -306,6 +309,8 @@ def CapturePicture():
     global ImageShowed
     global CountDownPhoto
     global BackgroundColor
+    
+    image = None
 
     BackgroundColor = ""
     Numeral = ""
@@ -319,36 +324,53 @@ def CapturePicture():
     pygame.display.flip()
     #camera.start_preview()
     BackgroundColor = "black"
-
+    
     camera.start()
-    camera.set_controls(hflip = True, vflip = False)
+    # camera.set_controls(hflip = True, vflip = False)
     streaming = True
+    countdown = 0
+    x = 3
+    Numeral = str(x)
+    Message = ""    
+    #UpdateDisplay()
+    print(camera.get_size())
+    print(background.get_size())
+    
     while streaming:
-        countdown = 0
-        x = 3
-        backgroundPicture = camera.get_image(backgroundPicture)
-        screen.blit(backgroundPicture, (0, 0))
+        if image:
+            if camera.query_image():
+                image = camera.get_image(image)
+        else:
+            image = camera.get_image()
+        
+        image2 = pygame.transform.scale(image,screen_size)
+        background.blit(image2, (0, 0))
+        screen.blit(background, (0,0))
         pygame.display.flip()  # update the display
         countdown = countdown + 1
-        if countdown == 10000:
-            Numeral = str(x)
-            Message = ""    
-            UpdateDisplay()
+        if countdown == 10:
             x = x - 1
-            countdown = 0
             if x == 0:
                 streaming = False
-        
+            else:
+                Numeral = str(x)
+                Message = ""    
+                #UpdateDisplay()
+                countdown = 0         
     BackgroundColor = ""
     Numeral = ""
     LongMessage = ""
     Message = ""
     UpdateDisplay()
+    image = camera.get_image(image)
+    image2 = pygame.transform.scale(image,screen_size)
+    background.blit(image2, (0, 0))
+    screen.blit(background, (0,0))
     imagecounter = imagecounter + 1
     ts = time.time()
     filename = os.path.join(imagefolder, 'images', str(imagecounter)+"_"+str(ts) + '.png')
-    pygame.image.save(backgroundPicture, filename)
-    #camera.capture(filename, resize=(IMAGE_WIDTH, IMAGE_HEIGHT))
+    pygame.image.save(background, filename)
+    # camera.capture(filename, resize=(IMAGE_WIDTH, IMAGE_HEIGHT))
     camera.stop()
     time.sleep(1)
     ShowPicture(filename, 1)
@@ -402,7 +424,7 @@ def TakePictures():
     Final_Image_Name = os.path.join(imagefolder, "Final_" + str(TotalImageCount)+"_"+str(ts) + ".png")
     # Save it to the usb drive
     bgimage.save(Final_Image_Name)
-    uploadToGP(Final_Image_Name)
+    # uploadToGP(Final_Image_Name)
     # Save a temp file, its faster to print from the pi than usb
     temppath = os.path.join('Temp', 'tempprint.png')
     bgimage.save(temppath)
