@@ -1,5 +1,5 @@
-import picamera
 import pygame
+import pygame.camera
 import time
 import os
 import PIL.Image
@@ -44,6 +44,7 @@ GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 # initialise pygame
 pygame.init()  # Initialise pygame
 pygame.font.init()
+pygame.camera.init()
 # pygame.mouse.set_visible(False) #hide the mouse cursor
 infoObject = pygame.display.Info()
 screen = pygame.display.set_mode((infoObject.current_w,infoObject.current_h), pygame.FULLSCREEN)  # Full screen  , pygame.FULLSCREEN
@@ -57,16 +58,16 @@ backgroundPicture = background.convert()  # Convert it to a background
 transform_x = infoObject.current_w # how wide to scale the jpg when replaying
 transfrom_y = infoObject.current_h # how high to scale the jpg when replaying
 
-camera = picamera.PiCamera()
 # Initialise the camera object
-#camera.resolution = (infoObject.current_w, infoObject.current_h)
-camera.resolution = (1040, 780)
-camera.rotation              = 0
-camera.hflip                 = True
-camera.vflip                 = False
-camera.brightness            = 50
-camera.preview_alpha = 120
-camera.preview_fullscreen = True
+# camera.resolution = (infoObject.current_w, infoObject.current_h)
+camera_resolution = (1040, 780)
+camera = pygame.camera.Camera("/dev/video1",camera_resolution)
+#camera.rotation              = 0
+#camera.hflip                 = True
+#camera.vflip                 = False
+#camera.brightness            = 50
+#camera.preview_alpha = 120
+#camera.preview_fullscreen = True
 #camera.framerate             = 24
 #camera.sharpness             = 0
 #camera.contrast              = 8
@@ -184,7 +185,6 @@ def UpdateDisplay():
     background.fill(pygame.Color("white"))  # White background
 
     if (BackgroundColor != ""):
-        #print(BackgroundColor)
         background.fill(pygame.Color("black"))
         
     if (Message != ""):
@@ -317,15 +317,28 @@ def CapturePicture():
     background.fill(pygame.Color("black"))
     screen.blit(background, (0, 0))
     pygame.display.flip()
-    camera.start_preview()
+    #camera.start_preview()
     BackgroundColor = "black"
-    
-    for x in range(3, 0, -1):
-        Numeral = str(x)
-        Message = ""    
-        UpdateDisplay()
-        time.sleep(0.75)
 
+    camera.start()
+    camera.set_controls(hflip = True, vflip = False)
+    streaming = True
+    while streaming:
+        countdown = 0
+        x = 3
+        backgroundPicture = camera.get_image(backgroundPicture)
+        screen.blit(backgroundPicture, (0, 0))
+        pygame.display.flip()  # update the display
+        countdown = countdown + 1
+        if countdown == 10000:
+            Numeral = str(x)
+            Message = ""    
+            UpdateDisplay()
+            x = x - 1
+            countdown = 0
+            if x == 0:
+                streaming = False
+        
     BackgroundColor = ""
     Numeral = ""
     LongMessage = ""
@@ -334,8 +347,9 @@ def CapturePicture():
     imagecounter = imagecounter + 1
     ts = time.time()
     filename = os.path.join(imagefolder, 'images', str(imagecounter)+"_"+str(ts) + '.png')
-    camera.capture(filename, resize=(IMAGE_WIDTH, IMAGE_HEIGHT))
-    camera.stop_preview()
+    image = camera.get_image()
+    #camera.capture(filename, resize=(IMAGE_WIDTH, IMAGE_HEIGHT))
+    camera.stop()
     time.sleep(1)
     ShowPicture(filename, 1)
     ImageShowed = False
