@@ -65,6 +65,7 @@ transfrom_y = infoObject.current_h # how high to scale the jpg when replaying
 camera_resolution = (infoObject.current_w, infoObject.current_h)
 camera_devices = pygame.camera.list_cameras()
 camera = pygame.camera.Camera(camera_devices[0],camera_resolution)
+camera.set_controls(hflip = True, vflip = False, 50)
 #camera.rotation              = 0
 #camera.hflip                 = True
 #camera.vflip                 = False
@@ -345,6 +346,12 @@ def CapturePicture():
         
         image2 = pygame.transform.scale(image,screen_size)
         background.blit(image2, (0, 0))
+        font = pygame.font.SysFont("Brandon Grotesque Bold", 200)
+        text = font.render(str(x), True, (255, 255, 255))
+        textpos = text.get_rect()
+        textpos.centerx = background.get_rect().centerx
+        textpos.centery = background.get_rect().centery
+        background.blit(text, textpos)
         screen.blit(background, (0,0))
         pygame.display.flip()  # update the display
         countdown = countdown + 1
@@ -353,9 +360,6 @@ def CapturePicture():
             if x == 0:
                 streaming = False
             else:
-                Numeral = str(x)
-                Message = ""    
-                #UpdateDisplay()
                 countdown = 0         
     BackgroundColor = ""
     Numeral = ""
@@ -441,34 +445,27 @@ def TakePictures():
     LongMessage = ""
     print(Printing)
     if Printing:
-        if (TotalImageCount <= PhotosPerCart):
-            if os.path.isfile(temppath):
-                # Open a connection to cups
-                conn = cups.Connection()
-                # get a list of printers
-                # printers = conn.getPrinters()
-                # select printer 0
-                printer_name = "Canon_MP250_series"
-                Message = "Aan het printen..."
-                UpdateDisplay()
-                time.sleep(1)
-                # print the buffer file
-                printqueuelength = len(conn.getJobs())
-                if printqueuelength > 1:
-                    ShowPicture(temppath,3)
-                    conn.enablePrinter(printer_name)
-                    Message = "Probleem met de printer... :("                
-                    UpdateDisplay()
-                    time.sleep(1)
-                else:
-                    conn.printFile(printer_name, temppath, "PhotoBooth", {})
-                    time.sleep(40)            
-        else:
-            Message = "We sturen je foto's op"
-            Numeral = ""
+        if os.path.isfile(temppath):
+            # Open a connection to cups
+            conn = cups.Connection()
+            # get a list of printers
+            # printers = conn.getPrinters()
+            # select printer 0
+            printer_name = "Canon_MP250_series"
+            Message = "Aan het printen..."
             UpdateDisplay()
             time.sleep(1)
-                
+            # print the buffer file
+            printqueuelength = len(conn.getJobs())
+            if printqueuelength > 1:
+                ShowPicture(temppath,3)
+                conn.enablePrinter(printer_name)
+                Message = "Probleem met de printer... :("                
+                UpdateDisplay()
+                time.sleep(1)
+            else:
+                conn.printFile(printer_name, temppath, "PhotoBooth", {})
+                time.sleep(40)            
     Message = ""
     Numeral = ""
     ImageShowed = False
