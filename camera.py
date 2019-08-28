@@ -62,10 +62,11 @@ transfrom_y = infoObject.current_h # how high to scale the jpg when replaying
 
 # Initialise the camera object
 # camera.resolution = (infoObject.current_w, infoObject.current_h)
-camera_resolution = (infoObject.current_w, infoObject.current_h)
+camera_resolution = (IMAGE_WIDTH, IMAGE_HEIGHT)
+#(infoObject.current_w, infoObject.current_h)
 camera_devices = pygame.camera.list_cameras()
 camera = pygame.camera.Camera(camera_devices[0],camera_resolution)
-camera.set_controls(hflip = True, vflip = False, 50)
+# camera.set_controls(1, 0, 50)
 #camera.rotation              = 0
 #camera.hflip                 = True
 #camera.vflip                 = False
@@ -326,16 +327,14 @@ def CapturePicture():
     #camera.start_preview()
     BackgroundColor = "black"
     
-    camera.start()
-    # camera.set_controls(hflip = True, vflip = False)
     streaming = True
     countdown = 0
     x = 3
     Numeral = str(x)
     Message = ""    
     #UpdateDisplay()
-    print(camera.get_size())
-    print(background.get_size())
+    #print(camera.get_size())
+    #print(background.get_size())
     
     while streaming:
         if image:
@@ -368,14 +367,13 @@ def CapturePicture():
     UpdateDisplay()
     image = camera.get_image(image)
     image2 = pygame.transform.scale(image,screen_size)
+    image = pygame.transform.scale(image,camera_resolution)
     background.blit(image2, (0, 0))
     screen.blit(background, (0,0))
     imagecounter = imagecounter + 1
     ts = time.time()
     filename = os.path.join(imagefolder, 'images', str(imagecounter)+"_"+str(ts) + '.png')
-    pygame.image.save(background, filename)
-    # camera.capture(filename, resize=(IMAGE_WIDTH, IMAGE_HEIGHT))
-    camera.stop()
+    pygame.image.save(image, filename)
     time.sleep(1)
     ShowPicture(filename, 1)
     ImageShowed = False
@@ -401,6 +399,9 @@ def TakePictures():
     LongMessage = ""
 
     input(pygame.event.get())
+    
+    camera.start()
+    
     CountDownPhoto = "Foto 1/3"    
     filename1 = CapturePicture()
 
@@ -409,6 +410,8 @@ def TakePictures():
 
     CountDownPhoto = "Foto 3/3"
     filename3 = CapturePicture()
+    
+    camera.stop()
 
     CountDownPhoto = ""
     Message = "Even geduld..."
@@ -443,7 +446,6 @@ def TakePictures():
     Message = ""
     SubMessage = ""
     LongMessage = ""
-    print(Printing)
     if Printing:
         if os.path.isfile(temppath):
             # Open a connection to cups
@@ -477,6 +479,7 @@ def TakePictures():
 def MyCallback(channel):
     global Printing
     GPIO.remove_event_detect(BUTTON_PIN)
+    pygame.event.clear()
     Printing=True
 
 def WaitForPrintingEvent():
@@ -509,6 +512,7 @@ def WaitForPrintingEvent():
         time.sleep(1)
 
     GPIO.remove_event_detect(BUTTON_PIN)
+    pygame.event.clear()
         
 def uploadToGP(filename):
     p = Popen(['/usr/bin/share/gpup','-a "trouw"', filename], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -536,6 +540,7 @@ def WaitForEvent():
                 pygame.quit()
                         
             time.sleep(0.2)
+    pygame.event.clear()
 
 def main(threadName, *args):
     InitFolder()
