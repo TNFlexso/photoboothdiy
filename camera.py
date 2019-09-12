@@ -8,6 +8,7 @@ import cups
 import RPi.GPIO as GPIO
 import subprocess
 
+from shutil import copyfile
 from threading import Thread
 from pygame.locals import *
 from time import sleep
@@ -27,12 +28,14 @@ TotalImageCount = 0  # Counter for Display and to monitor paper usage
 PhotosPerCart = 30  # Selphy takes 16 sheets per tray
 imagecounter = 0
 imagefolder = 'Photos'
+backupfolder = '/media/pi/90B6-124C/trouw'
 templatePath = os.path.join('Photos', 'Template', "template.png") #Path of template image
 ImageShowed = False
 Printing = False
 BUTTON_PIN = 25
 IMAGE_WIDTH = 594
 IMAGE_HEIGHT = 445
+image_size = (IMAGE_WIDTH, IMAGE_HEIGHT)
 os.environ["SDL_AUDIODRIVER"] = "dsp"
 
 # Load the background template
@@ -46,14 +49,15 @@ GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 pygame.init()  # Initialise pygame
 pygame.font.init()
 pygame.camera.init()
+pygame.mouse.set_visible(False)
 # pygame.mouse.set_visible(False) #hide the mouse cursor
 infoObject = pygame.display.Info()
 screen_size = (infoObject.current_w,infoObject.current_h)
-screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE)  # Full screen  , pygame.FULLSCREEN
+screen = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)  # Full screen  , pygame.FULLSCREEN
 background = pygame.Surface(screen_size)  # Create the background object
 background = background.convert()  # Convert it to a background
 
-screenPicture = pygame.display.set_mode(screen_size, pygame.RESIZABLE)  # Full screen
+screenPicture = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)  # Full screen
 backgroundPicture = pygame.Surface(screen_size)  # Create the background object
 backgroundPicture = background.convert()  # Convert it to a background
 
@@ -66,27 +70,7 @@ camera_resolution = (IMAGE_WIDTH, IMAGE_HEIGHT)
 #(infoObject.current_w, infoObject.current_h)
 camera_devices = pygame.camera.list_cameras()
 camera = pygame.camera.Camera(camera_devices[0],camera_resolution)
-# camera.set_controls(1, 0, 50)
-#camera.rotation              = 0
-#camera.hflip                 = True
-#camera.vflip                 = False
-#camera.brightness            = 50
-#camera.preview_alpha = 120
-#camera.preview_fullscreen = True
-#camera.framerate             = 24
-#camera.sharpness             = 0
-#camera.contrast              = 8
-#camera.saturation            = 0
-#camera.ISO                   = 0
-#camera.video_stabilization   = False
-#camera.exposure_compensation = 0
-#camera.exposure_mode         = 'auto'
-#camera.meter_mode            = 'average'
-#camera.awb_mode              = 'auto'
-#camera.image_effect          = 'none'
-#camera.color_effects         = None
-#camera.crop                  = (0.0, 0.0, 1.0, 1.0)
-
+# camera.set_controls(True, False, 50)
 
 # A function to handle keyboard/mouse/device input events
 def input(events):
@@ -159,10 +143,8 @@ def DisplayText(fontSize, textToDisplay):
     global CountDownPhoto
 
     if (BackgroundColor != ""):
-        #print(BackgroundColor)
         background.fill(pygame.Color("black"))
     if (textToDisplay != ""):
-        #print(displaytext)
         font = pygame.font.Font(None, fontSize)
         text = font.render(textToDisplay, 1, (227, 157, 200))
         textpos = text.get_rect()
@@ -324,7 +306,6 @@ def CapturePicture():
     background.fill(pygame.Color("black"))
     screen.blit(background, (0, 0))
     pygame.display.flip()
-    #camera.start_preview()
     BackgroundColor = "black"
     
     streaming = True
@@ -332,9 +313,6 @@ def CapturePicture():
     x = 3
     Numeral = str(x)
     Message = ""    
-    #UpdateDisplay()
-    #print(camera.get_size())
-    #print(background.get_size())
     
     while streaming:
         if image:
@@ -342,8 +320,9 @@ def CapturePicture():
                 image = camera.get_image(image)
         else:
             image = camera.get_image()
-        
-        image2 = pygame.transform.scale(image,screen_size)
+            
+        image = pygame.transform.flip(image, True, False)        
+        image2 = pygame.transform.scale(image, screen_size)
         background.blit(image2, (0, 0))
         font = pygame.font.SysFont("Brandon Grotesque Bold", 200)
         text = font.render(str(x), True, (255, 255, 255))
@@ -365,7 +344,12 @@ def CapturePicture():
     LongMessage = ""
     Message = ""
     UpdateDisplay()
+    photo_ready = camera.query_image()
+    time.sleep(0.5)
+    while not photo_ready:
+        photo_ready = camera.query_image()
     image = camera.get_image(image)
+    image = pygame.transform.flip(image, True, False)
     image2 = pygame.transform.scale(image,screen_size)
     image = pygame.transform.scale(image,camera_resolution)
     background.blit(image2, (0, 0))
@@ -374,7 +358,7 @@ def CapturePicture():
     ts = time.time()
     filename = os.path.join(imagefolder, 'images', str(imagecounter)+"_"+str(ts) + '.png')
     pygame.image.save(image, filename)
-    time.sleep(1)
+    #time.sleep(1)
     ShowPicture(filename, 1)
     ImageShowed = False
     return filename
@@ -382,6 +366,7 @@ def CapturePicture():
 def TakePictures():
     global imagecounter
     global imagefolder
+    global backupfolder
     global Numeral
     global Message
     global LongMessage
@@ -429,9 +414,13 @@ def TakePictures():
     # Create the final filename
     ts = time.time()
     Final_Image_Name = os.path.join(imagefolder, "Final_" + str(TotalImageCount)+"_"+str(ts) + ".png")
-    # Save it to the usb drive
+    Backup_Image_Name = os.path.join(backupfolder, "Final_" + str(TotalImageCount)+"_"+str(ts) + ".png")
+    # Save it to the raspberry SD card and backup to usb drive
     bgimage.save(Final_Image_Name)
-    # uploadToGP(Final_Image_Name)
+    try:
+        copyfile(Final_Image_Name, Backup_Image_Name)
+    except Exception as filex:
+        print("USB not found")
     # Save a temp file, its faster to print from the pi than usb
     temppath = os.path.join('Temp', 'tempprint.png')
     bgimage.save(temppath)
